@@ -49,9 +49,12 @@ def download_with_arxiv_dl(url: str, output_dir: str):
         match = re.search(r'(\d{4}\.\d{4,5})', url)
         if match:
             arxiv_id = match.group(1)
-            # Use the local arxiv-dl executable
-            # Assuming it's in the .venv/Scripts folder
+            # Try Windows style
             arxiv_dl_path = os.path.join('.venv', 'Scripts', 'arxiv-dl')
+            if not os.path.exists(arxiv_dl_path):
+                 # Try Mac/Linux style
+                 arxiv_dl_path = os.path.join('.venv', 'bin', 'arxiv-dl')
+            
             if not os.path.exists(arxiv_dl_path):
                  arxiv_dl_path = 'arxiv-dl' # Fallback to system path
 
