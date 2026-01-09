@@ -1,6 +1,7 @@
 import os
 import re
 import requests
+import subprocess
 from urllib.parse import urlparse
 from typing import Set
 
@@ -35,6 +36,32 @@ def is_pdf(url: str) -> bool:
         pass
     return False
 
+def is_arxiv(url: str) -> bool:
+    """Checks if a URL is an ArXiv link."""
+    return 'arxiv.org' in url.lower()
+
+def download_with_arxiv_dl(url: str, output_dir: str):
+    """Downloads an ArXiv paper using arxiv-dl."""
+    try:
+        print(f"Downloading with arXiv-dl: {url}")
+        # Identify if there's an ID in the URL
+        # e.g., https://arxiv.org/abs/2305.10037 or https://arxiv.org/pdf/2305.10037.pdf
+        match = re.search(r'(\d{4}\.\d{4,5})', url)
+        if match:
+            arxiv_id = match.group(1)
+            # Use the local arxiv-dl executable
+            # Assuming it's in the .venv/Scripts folder
+            arxiv_dl_path = os.path.join('.venv', 'Scripts', 'arxiv-dl')
+            if not os.path.exists(arxiv_dl_path):
+                 arxiv_dl_path = 'arxiv-dl' # Fallback to system path
+
+            subprocess.run([arxiv_dl_path, arxiv_id, '-d', output_dir], check=True)
+            print(f"Finished downloading ArXiv ID: {arxiv_id}")
+        else:
+            print(f"Could not extract ArXiv ID from URL: {url}")
+    except Exception as e:
+        print(f"Failed to download ArXiv paper {url}: {e}")
+
 def download_pdf(url: str, output_dir: str):
     """Downloads a PDF from a URL."""
     try:
@@ -66,7 +93,7 @@ def download_pdf(url: str, output_dir: str):
         print(f"Failed to download {url}: {e}")
 
 def main():
-    readme_path = 'README.md'
+    readme_path = os.path.join('Awesome-Graph-LLM', 'README.md')
     output_dir = 'downloads'
     
     if not os.path.exists(output_dir):
@@ -76,11 +103,11 @@ def main():
     urls = get_urls_from_markdown(readme_path)
     print(f"Found {len(urls)} unique URLs.")
     
-    pdf_urls = [url for url in urls if is_pdf(url)]
-    print(f"Found {len(pdf_urls)} PDF links.")
-    
-    for url in pdf_urls:
-        download_pdf(url, output_dir)
+    for url in urls:
+        if is_arxiv(url):
+            download_with_arxiv_dl(url, output_dir)
+        elif is_pdf(url):
+            download_pdf(url, output_dir)
 
 if __name__ == "__main__":
     main()
