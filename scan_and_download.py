@@ -49,6 +49,14 @@ def download_with_arxiv_dl(url: str, output_dir: str):
         match = re.search(r'(\d{4}\.\d{4,5})', url)
         if match:
             arxiv_id = match.group(1)
+            
+            # Check if file already exists in output_dir
+            # arxiv-dl usually saves as [ID] Title.pdf, but we check if ID is in any filename
+            existing_files = os.listdir(output_dir)
+            if any(arxiv_id in f for f in existing_files):
+                print(f"Skipping ArXiv paper (already exists): {arxiv_id}")
+                return
+
             # Try Windows style
             arxiv_dl_path = os.path.join('.venv', 'Scripts', 'arxiv-dl')
             if not os.path.exists(arxiv_dl_path):
