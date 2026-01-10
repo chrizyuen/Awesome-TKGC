@@ -95,18 +95,36 @@ def download_pdf(url: str, output_dir: str):
     except Exception as e:
         print(f"Failed to download {url}: {e}")
 
+def find_all_readmes(root_dir: str) -> list[str]:
+    """Scans for README.md files in all subdirectories."""
+    readme_files = []
+    for root, dirs, files in os.walk(root_dir):
+        # Case insensitive check for README.md
+        for file in files:
+            if file.lower() == 'readme.md':
+                readme_files.append(os.path.join(root, file))
+    return readme_files
+
 def main():
-    readme_path = os.path.join('Awesome-Graph-LLM', 'README.md')
+    root_dir = '.'
     output_dir = 'downloads'
     
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
         
-    print(f"Scanning {readme_path}...")
-    urls = get_urls_from_markdown(readme_path)
-    print(f"Found {len(urls)} unique URLs.")
+    print(f"Scanning for README.md files in '{root_dir}'...")
+    readme_files = find_all_readmes(root_dir)
+    print(f"Found {len(readme_files)} README files.")
     
-    for url in urls:
+    all_urls = set()
+    for readme_path in readme_files:
+        print(f"Processing {readme_path}...")
+        urls = get_urls_from_markdown(readme_path)
+        all_urls.update(urls)
+        
+    print(f"Found {len(all_urls)} unique URLs across all READMEs.")
+    
+    for url in all_urls:
         if is_arxiv(url):
             download_with_arxiv_dl(url, output_dir)
         elif is_pdf(url):
